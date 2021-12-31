@@ -1,10 +1,38 @@
 const express = require('express');
-const app = express();
+const morgan = require("morgan");
+const mongoose = require('mongoose');
+const router = require('./api/v1/routes/authRouter');
+const { PORT, MODE, DATABASE } = require("./config");
 
-app.get('/', (req,res) => {
-    res.send('Hello World');
+const app = express();
+app.use(morgan("dev"));
+app.use(express.json());
+
+
+app.use("/", router);
+
+// ping get request
+app.get('/ping', (req,res) => {
+    res.status(200).send('pong');
 });
 
-app.listen(5000, () => {
-    console.log(`Server running at port no. ${5000}`);
+// dead end
+app.use((req,res) => {
+    res.status(404).json({ message: 'verb not supported'}).end();
+});
+
+
+// database connection
+mongoose.connect(DATABASE, {
+    useNewUrlParser:true,
+    useUnifiedTopology:true
+
+}).then(()=>{
+    console.log(`connection successful`);
+
+}).catch((err)=>console.log(`no connection`, err)); 
+
+
+app.listen(PORT, () => {
+    console.log(`Server running in ${MODE} at port no. ${5000}`);
 });
