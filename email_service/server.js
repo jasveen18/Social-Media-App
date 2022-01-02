@@ -1,5 +1,5 @@
 const express = require("express"),
-    morgan = require("morgan");
+const    morgan = require("morgan");
 
 const { PORT, MODE } = require("./config");
 const { connect } = require("./api/v1/helper/dbconnect");
