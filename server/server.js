@@ -9,13 +9,6 @@ app.use(morgan("dev"));
 app.use(express.json());
 
 
-app.use("/", router);
-
-// ping get request
-app.get('/ping', (req,res) => {
-    res.status(200).send('pong');
-});
-
 // dead end
 app.use((req,res) => {
     res.status(404).json({ message: 'verb not supported'}).end();
@@ -31,6 +24,14 @@ mongoose.connect(DATABASE, {
     console.log(`connection successful`);
 
 }).catch((err)=>console.log(`no connection`, err)); 
+
+app.get("/ping", (req, res) => {
+    res.status(200).send("Server running...");
+});
+
+
+// routes
+app.use("/", router);
 
 
 app.listen(PORT, () => {
