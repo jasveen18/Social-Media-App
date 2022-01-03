@@ -1,13 +1,22 @@
+require("dotenv").config();
 const express = require('express');
 const morgan = require("morgan");
 const mongoose = require('mongoose');
-const router = require('./api/v1/routes/authRouter');
+const router = require('./api/v1/routes/index');
 const { PORT, MODE, DATABASE } = require("./config");
 
 const app = express();
 app.use(morgan("dev"));
 app.use(express.json());
 
+// ping pong
+app.get("/ping", (req, res) => {
+    res.status(200).send("pong");
+});
+
+
+// routes
+app.use("/", router);
 
 // dead end
 app.use((req,res) => {
@@ -25,13 +34,6 @@ mongoose.connect(DATABASE, {
 
 }).catch((err)=>console.log(`no connection`, err)); 
 
-app.get("/ping", (req, res) => {
-    res.status(200).send("Server running...");
-});
-
-
-// routes
-app.use("/", router);
 
 
 app.listen(PORT, () => {
