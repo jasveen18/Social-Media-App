@@ -68,7 +68,7 @@ const edit_profile = async(req,res) => {
         
         valid_user.name = req.body.name;
         valid_user.username = req.body.username;
-        valid_user.password = bycrypt.hashSync(req.body.password, 10);
+        valid_user.password = bcrypt.hashSync(req.body.password, 10);
         valid_user.save();
         
         res.status(200).json({message: 'Profile updated successfully'});
