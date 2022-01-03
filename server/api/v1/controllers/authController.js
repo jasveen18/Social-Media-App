@@ -7,12 +7,15 @@ const bcrypt = require('bcrypt');
 
 
 const transporter = nodemailer.createTransport({
-    service: "Gmail",
+    host: 'smtp.ethereal.email',
+    port: 587,
     auth: {
         user: process.env.EMAIL_USERNAME,
         pass: process.env.EMAIL_PASSWORD,
     },
+
 });
+
 
 
 // post request for new user signin
@@ -21,7 +24,7 @@ const signin = async(req,res) => {
     const { name, username, email, password, confirm_password } = req.body;
 
     if(!username || !email || !password || !confirm_password || !name){
-        return res.status(422).json({error: 'please fill the fields properly'});
+        return res.status(400).json({error: 'please fill the fields properly'});
     }
 
     try{
@@ -30,19 +33,19 @@ const signin = async(req,res) => {
         
         if(user){
             if(user.email===email && user.email_verified===true){
-                return res.status(422).json({error: 'email already exist'});
+                return res.status(409).json({error: 'email already exist'});
             }
             else if(user.username===username){
-                return res.status(422).json({error: 'username already exist'});
+                return res.status(409).json({error: 'username already exist'});
             }
         }
 
         
         if(password != confirm_password){
-            return res.status(422).json({error: 'password is not matching'});
+            return res.status(400).json({error: 'password is not matching'});
         }
         else if(password.length<6){
-            return res.status(422).json({error: 'password length should be minimum of 6 '});
+            return res.status(400).json({error: 'password length should be minimum of 6 '});
         }
         else
         {
@@ -51,28 +54,42 @@ const signin = async(req,res) => {
             await user.save();
 
             const verificationToken = tokenManager.newToken(
-                { username: req.username }, 
+                { username: username }, 
                 process.env.SECRET_KEY,
                 '1h'
             );
 
-            const url = `http://localhost:5000/users/email_verify?token=${verificationToken}`;
+            console.log(verificationToken);
 
-            transporter.sendMail({
+            const url = `http://localhost:5000/users/email_verify?token=${verificationToken}`;
+            
+            const mail = {
                 to: email,
+                from: "Social Media App",
                 subject: 'Verify Account',
                 html: `Click <a href = '${url}'>here</a> to confirm your email.`
+            };
+
+            transporter.sendMail(mail, function(err,info) {
+                if(err){
+                    console.log("error:" ,err);
+                    return;
+                }
+                console.log("Sent: " + info.response);
             });
+            
+
 
             return res.status(201).send({
-                message: `Sent a verification email to ${email}`
-              });
+                message: `Account created and Sent a verification email to ${email}`
+            });
 
         }
 
 
-    }catch(err){
+    } catch(err){
         console.log('error in registration',err);
+        res.status(500).json({message: err});
     }
 
 };
@@ -88,13 +105,13 @@ const login = async(req,res) => {
             return res.status(400).json({error:'please fill the details'});
         }
 
-        const userLogin = await userServices.findOnebyEmailorUsername(email, username);
+        const userLogin = await userServices.findOnebyEmailorUsername(username);
 
         if(userLogin){
             const isMatch = await bcrypt.compare(password,userLogin.password);
 
             const loginToken = tokenManager.newToken(
-                { username: req.username },
+                { username: username },
                 process.env.SECRET_KEY,
                 "1h"
             );
@@ -105,7 +122,7 @@ const login = async(req,res) => {
             });
 
             if(!isMatch){
-                res.status(400).json({error:'invalid credientials'});
+                res.status(401).json({error:'invalid credientials'});
             }
             else
             {
@@ -114,13 +131,14 @@ const login = async(req,res) => {
         }
         else
         {
-            res.status(400).json({error:'invalid credientials'});
+            res.status(401).json({error:'username does not exist'});
         }
         
     }catch(err){
         console.log('error in login',err);
+        res.status(500).json({message: err});
     }
-}
+};
 
 
 //get request for email verification
@@ -236,7 +254,7 @@ const forgot_password = async(req,res) => {
   
 
 const logout = (req,res) => {
-    res.clearCookie('login_token').status(200).json({message: 'User logged out successfully'});
+    res.clearCookie('jwtoken').status(200).json({message: 'User logged out successfully'});
 };
 
 
