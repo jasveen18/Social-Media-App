@@ -1,28 +1,40 @@
-const jwt = require('jsonwebtoken');
-const userServices = require('../services/userServices');
+const tokenManager = require("../helpers/token_manager");
 
-const Authenticate = async(req,res,next) => {
-    try{
-        const token = req.cookies.jwtoken;
-        const verifyToken = jwt.verify(token, process.env.SECRET_KEY);
+const authorization = (req, res, next) => {
 
-        const rootUser = await userServices.findOneOnly({_id: verifyToken._id});
-
-        if(!rootUser){
-            throw new Error('User not found');
-        }
-
-        req.token = token;
-        req.rootUser = rootUser;
-        req.userID = rootUser._id;
-
-        next();
-
-    }catch(err){
-    
-        console.log(err);
+    let token;
+    if (req.cookies.jwtoken) {
+        token = req.cookies.jwtoken;
+    } 
+    else if (req.headers["authorization"]) {
+        token = req.headers["authorization"].split(" ")[1];
     }
 
+    if (!token) {
+        return res.status(403).json({
+           success: false,
+           message: "User not logged in",
+        });
+    }
+
+    try {
+        const decoded = tokenManager.verify(token, process.env.SECRET_KEY);
+        if (decoded.verified === false) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid authentication",
+            });
+        }
+
+        req.userId = decoded.content.username;
+        return next();
+
+    } catch {
+        return res.status(500).json({
+            message: "Authentication server error",
+        });
+    }
 };
 
-module.exports = Authenticate;
+
+module.exports = authorization;
