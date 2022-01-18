@@ -17,7 +17,6 @@ const userSchema = new mongoose.Schema({
     email:{
         type:String,
         required:true,
-        unique:true
     },
 
     password:{
@@ -38,6 +37,45 @@ const userSchema = new mongoose.Schema({
         default: false,
         sparse:true
     },
+
+    image:{
+        type:String,
+        required:true
+    },
+    
+    imageId:{
+        type:String
+    },
+
+    friends:[
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        }
+    ],
+
+    friendRequestsSent:[
+        { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: "User" 
+        }
+    ],
+
+    friendRequests:[
+        { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: "User" 
+        }
+    ],
+
+    blockedUsers:[
+        { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: "User" 
+        }
+    ],
+
+    
 },
 
 
