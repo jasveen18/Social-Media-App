@@ -81,6 +81,17 @@ const userSchema = new mongoose.Schema({
             ref: "Post"
         }
     ],
+    
+    profileStatus:{
+            type: String,
+            enum: ["public", "private"],
+            default: "public",
+    },
+    
+    notification:{
+            type: Boolean,
+            default: false,
+    },
 
     
 },
